@@ -1,0 +1,17 @@
+// Sum integers from 1 to n. Example: sum_to(5) = 15.
+sum_to(n:int)
+    requires n >= 0
+    returns r:int
+    ensures 2 * r == n * (n + 1)
+    uses i:int
+{
+    r = 0;
+    i = 0;
+    while (i < n)
+        invariant 0 <= i and i <= n and 2 * r == i * (i + 1)
+    {
+        i = i + 1;
+        r = r + i;
+    }
+    assert 2 * r == n * (n + 1);
+}

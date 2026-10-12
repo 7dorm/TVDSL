@@ -1,4 +1,3 @@
-"""HW1: Thompson NFA -> subset DFA -> Hopcroft DFA for Funny tokens."""
 
 import argparse
 import json
@@ -7,18 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ASCII = frozenset(range(128))
-KEYWORDS = (
-    "function", "returns", "uses", "requires", "ensures", "while", "if",
-    "else", "assert", "assume", "invariant", "length", "int", "true", "false",
-    "not", "and", "or", "forall", "exists",
-)
-SYMBOLS = {
-    "(": "LPAREN", ")": "RPAREN", "[": "LBRACKET", "]": "RBRACKET",
-    "{": "LBRACE", "}": "RBRACE", ",": "COMMA", ";": "SEMICOLON",
-    ":": "COLON", "|": "PIPE", "+": "PLUS", "-": "MINUS", "*": "STAR",
-    "/": "SLASH", "==": "EQ", "!=": "NE", "<=": "LE", ">=": "GE",
-    "<": "LT", ">": "GT", "=": "ASSIGN", "->": "IMPLIES", "=>": "ARROW",
-}
+SPEC_PATH = Path(__file__).with_name("language_spec.json")
+LANGUAGE_SPEC = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+KEYWORDS = tuple(LANGUAGE_SPEC["keywords"])
+SYMBOLS = LANGUAGE_SPEC["symbols"]
 
 
 def literal_regex(text):
@@ -34,10 +25,7 @@ class Rule:
 
 RULES = (
     *(Rule("TYPE_INT" if word == "int" else word.upper(), word) for word in KEYWORDS),
-    Rule("IDENT", r"[A-Za-z_][A-Za-z0-9_]*"),
-    Rule("INT", r"0|[1-9][0-9]*"),
-    Rule("WS", r"[ \t\r\n]+", True),
-    Rule("COMMENT", r"//[^\r\n]*", True),
+    *(Rule(**token) for token in LANGUAGE_SPEC["tokens"]),
     *(Rule(kind, literal_regex(symbol)) for symbol, kind in SYMBOLS.items()),
 )
 
@@ -67,8 +55,6 @@ class NFA:
 
 
 class RegexParser:
-    """Recursive descent: union -> concatenation -> repetition -> atom."""
-
     def __init__(self, pattern, nfa):
         self.pattern, self.nfa, self.pos = pattern, nfa, 0
 
