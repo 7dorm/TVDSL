@@ -1,0 +1,71 @@
+{
+  "keywords": [
+    "function",
+    "returns",
+    "uses",
+    "requires",
+    "ensures",
+    "while",
+    "if",
+    "else",
+    "assert",
+    "assume",
+    "invariant",
+    "length",
+    "int",
+    "true",
+    "false",
+    "not",
+    "and",
+    "or",
+    "forall",
+    "exists"
+  ],
+  "symbols": {
+    "(": "LPAREN",
+    ")": "RPAREN",
+    "[": "LBRACKET",
+    "]": "RBRACKET",
+    "{": "LBRACE",
+    "}": "RBRACE",
+    ",": "COMMA",
+    ";": "SEMICOLON",
+    ":": "COLON",
+    "|": "PIPE",
+    "+": "PLUS",
+    "-": "MINUS",
+    "*": "STAR",
+    "/": "SLASH",
+    "==": "EQ",
+    "!=": "NE",
+    "<=": "LE",
+    ">=": "GE",
+    "<": "LT",
+    ">": "GT",
+    "=": "ASSIGN",
+    "->": "IMPLIES",
+    "=>": "ARROW"
+  },
+  "tokens": [
+    {
+      "kind": "IDENT",
+      "pattern": "[A-Za-z_][A-Za-z0-9_]*",
+      "skip": false
+    },
+    {
+      "kind": "INT",
+      "pattern": "0|[1-9][0-9]*",
+      "skip": false
+    },
+    {
+      "kind": "WS",
+      "pattern": "[ \\t\\r\\n]+",
+      "skip": true
+    },
+    {
+      "kind": "COMMENT",
+      "pattern": "//[^\\r\\n]*",
+      "skip": true
+    }
+  ]
+}
