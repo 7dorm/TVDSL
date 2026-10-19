@@ -1,0 +1,5 @@
+main(a:int[]) returns r:int uses tmp, unused {
+    tmp = 1;
+    tmp = a;
+    r = tmp;
+}
