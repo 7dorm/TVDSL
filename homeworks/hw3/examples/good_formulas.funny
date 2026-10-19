@@ -1,0 +1,6 @@
+positive(a:int[]) => forall(i:int | i >= 0 and i < length(a) -> a[i] > 0);
+
+count(a:int[]) requires positive(a) returns r:int ensures r >= 0 {
+    r = length(a);
+    assert exists(i:int | i == r);
+}

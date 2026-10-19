@@ -1,20 +1,29 @@
-(* Funny HW2: predictive recursive descent. ASCII; longest-match lexer from HW1.
-   Terminals are quoted; IDENT and INT are lexical token categories; EOF is end.
-   A nonempty module is required. See README for FIRST/FOLLOW and policy choices. *)
+(* Funny: complete syntactic and lexical grammar for the HW2/HW3 parser.
+   Quoted strings are terminals; every unquoted name is defined in this file.
+   Comma means concatenation, | alternative, [] optional, {} repetition,
+   and - set difference. Special sequences ? ... ? specify exact character sets.
+   The start rule is module and must consume the entire input.
 
-module          = definition, { definition }, EOF ;
-definition      = [ "function" ], IDENT, "(", [ declarations ], ")", definition_tail ;
-definition_tail = "=>", expression, [ ";" ]
-                | [ "requires", [ expression ] ], "returns", declarations,
+   Syntax rules below operate on complete lexical units. Any number of separators may occur
+   before/after the module and between any two lexical units, but never inside
+   a keyword, identifier, integer literal, or multi-character operator.
+   The lexical rules at the end operate directly on characters: separators
+   are NOT inserted between their components. *)
+
+module          = definition, { definition } ;
+definition      = "function", identifier, "(", [ declarations ], ")", function_tail
+                | identifier, "(", [ declarations ], ")", (function_tail | formula_tail) ;
+formula_tail    = "=>", expression, [ ";" ] ;
+function_tail   = [ "requires", [ expression ] ], "returns", declarations,
                   [ "ensures", [ expression ] ], [ "uses", locals ], statement ;
 (* A formula cannot have a "function" prefix.
    Empty contracts are accepted only when the next token cannot start an expression.
    Before a bare-name statement, ensures/invariant is parsed greedily as expression. *)
 
 declarations    = declaration, { ",", declaration } ;
-declaration     = IDENT, ":", variable_type ;
+declaration     = identifier, ":", variable_type ;
 locals          = local, { ",", local } ;
-local           = IDENT, [ ":", variable_type ] ;
+local           = identifier, [ ":", variable_type ] ;
 variable_type   = "int", [ "[", "]" ] ;
 
 statement       = block
@@ -24,9 +33,9 @@ statement       = block
                 | "assume", expression, ";"
                 | assignment ;
 block           = "{", { statement }, "}" ;
-assignment      = IDENT, assignment_tail, "=", expression, ";" ;
+assignment      = identifier, assignment_tail, "=", expression, ";" ;
 assignment_tail = "[", expression, "]", { "[", expression, "]" }
-                | { ",", IDENT } ;
+                | { ",", identifier } ;
 (* Tuple assignment must have a Call as RHS.
    Array update lowers to Assign(Name, ArraySet(Name, indices, value)).
    ArraySet is an internal copy operation, not a user-callable function.
@@ -42,12 +51,49 @@ additive        = multiplicative, { ("+" | "-"), multiplicative } ;
 multiplicative  = unary, { ("*" | "/"), unary } ;
 unary           = "-", unary | postfix ;
 postfix         = atom, { "[", expression, "]" } ;
-atom            = INT | "true" | "false"
-                | IDENT, [ arguments ]
+atom            = integer_literal | "true" | "false"
+                | identifier, [ arguments ]
                 | "length", arguments
                 | "(", expression, ")"
                 | ("forall" | "exists"), "(", declaration, "|", expression, ")" ;
 arguments       = "(", [ expression, { ",", expression } ], ")" ;
+
+(* Lexical rules: case-sensitive ASCII only, including comments.
+   At each position choose the longest matching lexical unit. For an exact
+   keyword/identifier spelling tie, the keyword wins. Thus ifx is one identifier,
+   while if is reserved; <=, >=, ==, !=, ->, => and // are indivisible.
+   A zero immediately followed by another decimal digit is a lexical error,
+   rather than two integer literals. A minus sign is a separate operator.
+   Whitespace and line comments are discarded before syntactic analysis. *)
+
+identifier      = identifier_spelling - keyword ;
+identifier_spelling = (letter | "_"), { letter | digit | "_" } ;
+letter          = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I"
+                | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R"
+                | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+                | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+                | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r"
+                | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+integer_literal = "0" | nonzero_digit, { digit } ;
+digit           = "0" | nonzero_digit ;
+nonzero_digit   = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+keyword         = "function" | "returns" | "uses" | "requires" | "ensures"
+                | "while" | "if" | "else" | "assert" | "assume" | "invariant"
+                | "length" | "int" | "true" | "false" | "not" | "and" | "or"
+                | "forall" | "exists" ;
+
+separator       = whitespace | line_comment ;
+whitespace      = whitespace_char, { whitespace_char } ;
+whitespace_char = " " | tab | carriage_return | line_feed ;
+tab             = ? character U+0009 ? ;
+carriage_return = ? character U+000D ? ;
+line_feed       = ? character U+000A ? ;
+line_comment    = "//", { comment_char } ;
+comment_char    = ascii_character - (carriage_return | line_feed) ;
+ascii_character = ? one character with a code from U+0000 through U+007F inclusive ? ;
+(* A line comment ends before a carriage return or line feed, or at input end.
+   Both characters of a CRLF line ending are whitespace. No other character is
+   whitespace; other ASCII characters are legal only where a rule admits them. *)
 
 (* Unary minus is highest; multiplicative/additive are left-associative.
    Comparisons are non-associative; not binds below comparison and above and.

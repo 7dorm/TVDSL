@@ -1,0 +1,5 @@
+main(x:int, a:int[]) returns r:int {
+    x = 1;
+    a[0] = 2;
+    r = 0;
+}

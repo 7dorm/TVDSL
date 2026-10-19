@@ -1,0 +1,59 @@
+(* Funny HW2: predictive recursive descent. ASCII; longest-match lexer from HW1.
+   Terminals are quoted; IDENT and INT are lexical token categories; EOF is end.
+   A nonempty module is required. See README for FIRST/FOLLOW and policy choices. *)
+
+module          = definition, { definition }, EOF ;
+definition      = [ "function" ], IDENT, "(", [ declarations ], ")", definition_tail ;
+definition_tail = "=>", expression, [ ";" ]
+                | [ "requires", [ expression ] ], "returns", declarations,
+                  [ "ensures", [ expression ] ], [ "uses", locals ], statement ;
+(* A formula cannot have a "function" prefix.
+   Empty contracts are accepted only when the next token cannot start an expression.
+   Before a bare-name statement, ensures/invariant is parsed greedily as expression. *)
+
+declarations    = declaration, { ",", declaration } ;
+declaration     = IDENT, ":", variable_type ;
+locals          = local, { ",", local } ;
+local           = IDENT, [ ":", variable_type ] ;
+variable_type   = "int", [ "[", "]" ] ;
+
+statement       = block
+                | "if", "(", expression, ")", statement, [ "else", statement ]
+                | "while", "(", expression, ")", [ "invariant", [ expression ] ], statement
+                | "assert", expression, ";"
+                | "assume", expression, ";"
+                | assignment ;
+block           = "{", { statement }, "}" ;
+assignment      = IDENT, assignment_tail, "=", expression, ";" ;
+assignment_tail = "[", expression, "]", { "[", expression, "]" }
+                | { ",", IDENT } ;
+(* Tuple assignment must have a Call as RHS.
+   Array update lowers to Assign(Name, ArraySet(Name, indices, value)).
+   ArraySet is an internal copy operation, not a user-callable function.
+   Each index and value is evaluated once, in source order, when later executed. *)
+
+expression      = disjunction, [ "->", expression ] ;
+disjunction     = conjunction, { "or", conjunction } ;
+conjunction     = negation, { "and", negation } ;
+negation        = "not", negation | comparison ;
+comparison      = additive, [ comparison_op, additive ] ;
+comparison_op   = "==" | "!=" | "<" | "<=" | ">" | ">=" ;
+additive        = multiplicative, { ("+" | "-"), multiplicative } ;
+multiplicative  = unary, { ("*" | "/"), unary } ;
+unary           = "-", unary | postfix ;
+postfix         = atom, { "[", expression, "]" } ;
+atom            = INT | "true" | "false"
+                | IDENT, [ arguments ]
+                | "length", arguments
+                | "(", expression, ")"
+                | ("forall" | "exists"), "(", declaration, "|", expression, ")" ;
+arguments       = "(", [ expression, { ",", expression } ], ")" ;
+
+(* Unary minus is highest; multiplicative/additive are left-associative.
+   Comparisons are non-associative; not binds below comparison and above and.
+   Then and, or (left-associative), -> (right-associative).
+   Expressions share one syntactic grammar; type/context checks belong to HW3.
+   Dangling else attaches to the nearest unmatched if (greedy else policy).
+   This policy and greedy optional contract expressions resolve the noted LL conflicts;
+   the expression subgrammar itself is LL(1), not a claim of a conflict-free
+   LL(1) table for the complete optional-else language. *)

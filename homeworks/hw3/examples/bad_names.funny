@@ -1,0 +1,3 @@
+main(x:int, x:int) returns r:int {
+    r = missing + 1;
+}
