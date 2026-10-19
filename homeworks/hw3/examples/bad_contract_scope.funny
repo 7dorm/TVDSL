@@ -1,4 +1,0 @@
-main(x:int) requires r > x returns r:int ensures tmp > x uses tmp:int {
-    tmp = x;
-    r = tmp;
-}

@@ -1,7 +1,0 @@
-head(a:int[]) returns r:int {r = a[0];}
-
-main() returns r:int {
-    r = head(1);
-    r = head();
-    r = missing(1);
-}

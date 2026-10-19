@@ -1,4 +1,0 @@
-fact(n:int) requires n >= 0 returns r:int ensures r > 0 {
-    if (n <= 1) r = 1;
-    else r = n * fact(n - 1);
-}

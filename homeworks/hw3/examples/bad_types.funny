@@ -1,5 +1,0 @@
-main(a:int[], x:int) returns r:int {
-    r = a + 1;
-    if (x) r = 0;
-    r = a[true];
-}
