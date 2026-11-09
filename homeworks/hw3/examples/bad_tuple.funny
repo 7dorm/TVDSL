@@ -1,0 +1,6 @@
+pair() returns x:int, y:int {x = 1; y = 2;}
+
+main() returns r:int uses a:int, b:int, c:int {
+    a, b, c = pair();
+    r = pair() + 1;
+}
